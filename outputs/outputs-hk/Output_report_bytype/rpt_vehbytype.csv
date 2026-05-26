@@ -1,0 +1,13 @@
+filename,processingtime,label,score
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00001.png,2.975749799999903,van,0.7548661231994629
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00002.png,2.975749799999903,car,0.5882570743560791
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00003.png,2.975749799999903,bus,0.5669457316398621
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00004.png,2.975749799999903,truck,0.4947609305381775
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00005.png,2.975749799999903,car,0.46703073382377625
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00006.png,0.7034411999993608,car,0.34537798166275024
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00007.png,0.8597291000005498,car,0.5014145374298096
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00008.png,0.7588629999991099,truck,0.4960823655128479
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00009.png,0.744767200001661,car,0.497042715549469
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00010.png,0.8244534000004933,truck,0.4844522178173065
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00011.png,0.6725724000025366,car,0.5259492993354797
+C:\Users\Dylan.Magana\OneDrive - Arup\Desktop\yoloe_vehicle-counting\outputs\Output_image\veh_00012.png,0.6871393000001262,truck,0.8316793441772461
