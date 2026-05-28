@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 
 from config import SpecialistConfig
@@ -20,83 +18,36 @@ def iou(box_a: np.ndarray, box_b: np.ndarray) -> float:
     return inter / (area_a + area_b - inter)
 
 
-class CentroidTracker:
-    """Minimal centroid tracker for specialist supplement detections.
-
-    Track IDs start at an offset to avoid collision with YOLOWorld's ByteTrack IDs.
-    Each instance gets its own ID range (10M apart).
-    """
-
-    _instance_count = 0
-
-    def __init__(self, max_disappeared: int = 15, max_distance: float = 80.0) -> None:
-        self._next_id = 10_000_000 + CentroidTracker._instance_count * 10_000_000
-        CentroidTracker._instance_count += 1
-        self._objects: dict[int, tuple[float, float]] = {}
-        self._disappeared: dict[int, int] = {}
-        self._max_disappeared = max_disappeared
-        self._max_distance = max_distance
-
-    def update(self, centroids: list[tuple[float, float]]) -> list[int]:
-        for oid in list(self._objects):
-            self._disappeared[oid] = self._disappeared.get(oid, 0) + 1
-            if self._disappeared[oid] > self._max_disappeared:
-                del self._objects[oid]
-                del self._disappeared[oid]
-
-        if not centroids:
-            return []
-
-        assigned: list[int] = []
-        used: set[int] = set()
-
-        for cx, cy in centroids:
-            best_oid, best_dist = None, float("inf")
-            for oid, (ox, oy) in self._objects.items():
-                if oid in used:
-                    continue
-                d = math.hypot(cx - ox, cy - oy)
-                if d < best_dist:
-                    best_dist = d
-                    best_oid = oid
-
-            if best_oid is not None and best_dist < self._max_distance:
-                self._objects[best_oid] = (cx, cy)
-                self._disappeared[best_oid] = 0
-                assigned.append(best_oid)
-                used.add(best_oid)
-            else:
-                new_id = self._next_id
-                self._next_id += 1
-                self._objects[new_id] = (cx, cy)
-                self._disappeared[new_id] = 0
-                assigned.append(new_id)
-
-        return assigned
-
-
 def run_specialist(
     spec_cfg: SpecialistConfig,
     model: object,
-    tracker: CentroidTracker,
     frame: np.ndarray,
     classes: list[str],
     w_xyxy: np.ndarray,
     w_clss: np.ndarray,
+    id_offset: int = 0,
 ) -> tuple[np.ndarray, list[np.ndarray], list[float], list[int]]:
-    """Run one specialist model and return (updated w_clss, supp_boxes, supp_confs, supp_ids).
+    """Run one specialist model via ByteTrack and return (updated w_clss, supp_boxes, supp_confs, supp_ids).
 
+    Uses model.track() with persist=True so each specialist maintains its own ByteTrack state.
+    Track IDs are shifted by id_offset to avoid collision with YOLOWorld's ByteTrack IDs.
     Mutates ``w_clss`` in-place (relabels overlapping world boxes).
     """
-    result = model.predict(source=frame, conf=spec_cfg.confidence, verbose=False)[0]
+    result = model.track(source=frame, conf=spec_cfg.confidence, persist=True, verbose=False)[0]
     cls_idx = classes.index(spec_cfg.class_name)
 
     supp_boxes: list[np.ndarray] = []
     supp_cnfs: list[float] = []
+    supp_ids: list[int] = []
 
     if result.boxes is not None and len(result.boxes):
         spec_xyxy = result.boxes.xyxy.cpu().numpy()
         spec_cnfs = result.boxes.conf.cpu().numpy()
+        spec_ids = (
+            result.boxes.id.cpu().numpy().astype(int)
+            if result.boxes.id is not None
+            else np.arange(1, len(spec_xyxy) + 1, dtype=int)
+        )
 
         # Override: relabel world boxes that overlap a specialist box
         for i in range(len(w_xyxy)):
@@ -105,13 +56,11 @@ def run_specialist(
                 w_clss[i] = cls_idx
 
         # Supplement: specialist boxes with no world overlap
-        for sbox, sconf in zip(spec_xyxy, spec_cnfs):
+        for sbox, sconf, sid in zip(spec_xyxy, spec_cnfs, spec_ids):
             max_overlap = max((iou(sbox, wb) for wb in w_xyxy), default=0.0)
             if max_overlap < spec_cfg.iou_merge:
                 supp_boxes.append(sbox)
                 supp_cnfs.append(float(sconf))
-
-    centroids = [((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0) for b in supp_boxes]
-    supp_ids = tracker.update(centroids)
+                supp_ids.append(id_offset + int(sid))
 
     return w_clss, supp_boxes, supp_cnfs, supp_ids

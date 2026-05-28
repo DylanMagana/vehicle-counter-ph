@@ -4,3 +4,4 @@ __pycache__/
 *.pt
 *.ts
 inputs/
+outputs/sample/
